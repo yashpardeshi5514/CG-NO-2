@@ -1,80 +1,111 @@
-#include<iostream>
-#include<graphics.h>
-using namespace std;
 
-int main()
-{
-int gd=DETECT,gm;
-initgraph(&gd,&gm,NULL);
+Write C++ program to implement Cohen Southerland line clipping
+algorithm.
 
-int n,i,j,k,dy,dx;
-int x,y,temp;
-int a[20][2],xi[20];
-float slope[20];
-
-cout<<"Enter NUMBER of edges";
-cin>>n;
-
-for(i=0;i<n;i++)
-{
-cout<<"x"<<i<<" "<<"y"<<i;
-cin>>a[i][0]>>a[i][1];
-}
-a[n][0]=a[0][0];
-a[n][1]=a[0][1];
-
-for(i=0;i<n;i++)
-{
-line(a[i][0],a[i][1],a[i+1][0],a[i+1][1]);
-}
-
-for(i=0;i<n;i++)
-
-{
-dy=a[i+1][1]-a[i][1];
-dx=a[i+1][0]-a[i][0];
-
-if(dy==0) slope[i]=1.0;
-if(dx==0) slope[i]=0.0;
-if((dy!=0)&&(dx!=0))
-{
-slope[i]=(float) dx/dy;
-}
-}
-
-for(y=480;y>=0;y--)
-{
-k=0;
-for(i=0;i<n;i++)
-{
-if( ((a[i][1]<=y)&&(a[i+1][1]>y))||((a[i][1]>y)&&(a[i+1][1]<=y)))
-{
-xi[k]=(int)(a[i][0]+slope[i]*(y-a[i][1]));
-k++;
-}
-}
-
-for(j=0;j<k-1;j++)
-for(i=0;i<k-1;i++)
-{
-if(xi[i]>xi[i+1])
-{
-temp=xi[i];
-xi[i]=xi[i+1];
-
-xi[i+1]=temp;
-}
-}
-
-setcolor(WHITE);
-for(i=0;i<k;i+=2)
-{
-line(xi[i],y,xi[i+1]+1,y);
-delay(300);
-}
-
-}
-getch();
-closegraph();
-return 0;
+#include<iostream> 
+#include<graphics.h> 
+typedef unsigned int outcode; 
+enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8}; 
+using namespace std; 
+outcode CompOutCode(double ,double ,double ,double ,double ,double ); 
+void CSLCAD(double x0,double y0,double x1,double y1,double xmin,double xmax,double 
+ymin,double ymax) 
+{ 
+outcode outcode0,outcode1,outcodeout; 
+boolean accept=FALSE, done=FALSE; 
+outcode0=CompOutCode(x0,y0,xmin,xmax,ymin,ymax); 
+outcode1=CompOutCode(x1,y1,xmin,xmax,ymin,ymax); 
+cout<<"outcode0="<<outcode0<<endl; 
+cout<<"outcode1="<<outcode1<<endl; 
+do 
+{ 
+if(outcode0==0 && outcode1==0) 
+{ 
+accept=TRUE; 
+done=TRUE; 
+} 
+else if(outcode0 & outcode1) 
+{ 
+done=TRUE; 
+} 
+else 
+{ 
+double x,y; 
+int ocd=outcode0 ? outcode0:outcode1; 
+if(ocd & TOP) 
+{ 
+x=x0+(x1-x0)*(ymax-y0)/(y1-y0); 
+y=ymax; 
+} 
+else if(ocd & BOTTOM) 
+{ 
+x=x0+(x1-x0)*(ymin-y0)/(y1-y0); 
+y=ymin; 
+} 
+else if(ocd & LEFT) 
+{ 
+y=y0+(y1-y0)*(xmin-x0)/(x1-x0); 
+x=xmin; 
+} 
+else 
+{ 
+y=y0+(y1-y0)*(xmax-x0)/(x1-x0); 
+x=xmax; 
+} 
+if(ocd==outcode0) 
+{ 
+x0=x; 
+y0=y; 
+outcode0=CompOutCode(x0,y0,xmin,xmax,ymin,ymax); 
+} 
+else 
+{ 
+x1=x; 
+y1=y; 
+outcode1=CompOutCode(x1,y1,xmin,xmax,ymin,ymax); 
+} 
+} 
+}while(done==FALSE); 
+if(accept==TRUE) 
+{ 
+line(x0,y0,x1,y1); 
+} 
+} 
+outcode CompOutCode(double x,double y,double xmin,double xmax,double ymin,double ymax) 
+{ 
+outcode code=0; 
+if(y>ymax) 
+code|=TOP; 
+if(y<ymin) 
+code|=BOTTOM; 
+if(x>xmax) 
+code|=RIGHT; 
+if(x<xmin) 
+code|=LEFT; 
+return code; 
+} 
+int main() 
+{ 
+string ch; 
+double xmin,xmax,ymin,ymax,x0,y0,x1,y1; 
+initwindow(500,600); 
+cout<<"Enter the bottom co-ordinates of window:"; 
+cin>>xmin; 
+cout<<"Enter the left coordinates of the window:"; 
+cin>>ymin; 
+cout<<"Enter the right coordinates of the window:"; 
+cin>>xmax; 
+cout<<"Enter the top coordinates of the window:"; 
+cin>>ymax; 
+rectangle(xmin,ymin,xmax,ymax); 
+cout<<"Enter the coordinates(Terminal Points) of the line: "; 
+cin>>x0>>y0; 
+cin>>x1>>y1; 
+line(x0,y0,x1,y1); 
+delay(5000); 
+cleardevice(); 
+CSLCAD(x0,y0,x1,y1,xmin,xmax,ymin,ymax); 
+rectangle(xmin,ymin,xmax,ymax); 
+delay(50000); 
+closegraph(); 
 }
